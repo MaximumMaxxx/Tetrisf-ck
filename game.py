@@ -1,3 +1,4 @@
+from math import fabs
 from re import T
 import pygame
 import random
@@ -62,6 +63,7 @@ def main():
         board = copy.deepcopy(placedBoard)
         board = renderShape(SHAPES[current_shape][rotation], piecex, piecey, current_color, board)
         drawBoard(board)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -80,16 +82,7 @@ def main():
                     # Left mouse
                     mouseDown = True
         
-        mx, my = pygame.mouse.get_pos()
-        if BUTTON_X <= mx <=BUTTON_X + BUTTON_WIDTH and BUTTON_Y <= my <=BUTTON_Y+BUTTON_HEIGHT:
-            pygame.draw.rect(SCREEN, BUTTON_DARK,[BUTTON_X,BUTTON_Y,BUTTON_WIDTH,BUTTON_HEIGHT])
-            if mouseDown:
-                # Run the interperter
-                pass
-        else:
-            pygame.draw.rect(SCREEN, BUTTON_LIGHT,[BUTTON_X,BUTTON_Y,BUTTON_WIDTH,BUTTON_HEIGHT])
-
-        SCREEN.blit(BUTTON_TEXT_SURFACE , (BUTTON_X + BUTTON_TEXT_OFFSET, BUTTON_Y))
+        drawButton(mouseDown, BUTTON_TEXT_SURFACE)
 
         if ticks % TICKSPERMOVE == 0 and checkIfCanGoDown(placedBoard, SHAPES[current_shape][rotation], piecex, piecey):
             piecey += 1
@@ -177,8 +170,10 @@ def renderShape(shape, x, y, color, board):
     for i in range(len(shape)):
         for j in range(len(shape[i])):
             if shape[i][j] != 0:
-                board[y + i][x + j] = color
-
+                try:
+                    board[y + i][x + j] = color
+                except IndexError:
+                    pass
     return board
 
 def checkIfCanGoLeft(board, piece, x, y):
@@ -215,10 +210,25 @@ def checkIfCanGoDown(board, piece, x, y):
     for i in range(len(piece)):
         for j in range(len(piece[i])):
             if piece[i][j] != 0:
-                if y + 1 + i > GRID_HEIGHT or board[y + 1][x + j] != " ":
-                    return False
-
+                try:
+                    if y + 1 + i > GRID_HEIGHT or board[y + 1][x + j] != " ":
+                        return False
+                except IndexError:
+                    pass
     return True
+
+def drawButton(mouseDown, BUTTON_TEXT_SURFACE):
+    # Button stuff
+    mx, my = pygame.mouse.get_pos()
+    if BUTTON_X <= mx <=BUTTON_X + BUTTON_WIDTH and BUTTON_Y <= my <=BUTTON_Y+BUTTON_HEIGHT:
+        pygame.draw.rect(SCREEN, BUTTON_DARK,[BUTTON_X,BUTTON_Y,BUTTON_WIDTH,BUTTON_HEIGHT])
+        if mouseDown:
+            # Run the interperter
+            pass
+    else:
+        pygame.draw.rect(SCREEN, BUTTON_LIGHT,[BUTTON_X,BUTTON_Y,BUTTON_WIDTH,BUTTON_HEIGHT])
+
+    SCREEN.blit(BUTTON_TEXT_SURFACE , (BUTTON_X + BUTTON_TEXT_OFFSET, BUTTON_Y))
 
 if __name__ == "__main__":
     main()
