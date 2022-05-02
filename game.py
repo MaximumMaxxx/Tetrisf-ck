@@ -57,8 +57,9 @@ def main():
 
     placedBoard = initBoard()
     current_color = random.choice(COLORS)
+    running = True
 
-    while True:
+    while running:
         wantsToMoveDown = False
         mouseDown = False
         board = []
@@ -125,6 +126,19 @@ def main():
                     placedBoard.insert(0, [])
                     for _ in range(GRID_WIDTH):
                         placedBoard[0].append(BOAD_EMPTY)
+
+
+            # Check if game is over
+            # Do the board overlay stuff with the next piece
+            if not checkIfValidPosition(placedBoard, SHAPES[current_shape][rotation], piecex, piecey):
+                # Red gameover font
+                font = pygame.font.SysFont('Corbel', 100)
+                text = font.render("Game Over", True, (255, 0, 0))
+                SCREEN.blit(text, (WINDOW_WIDTH / 2 - text.get_width() / 2, WINDOW_HEIGHT / 2 - text.get_height() / 2))
+                pygame.display.update()
+                pygame.time.wait(1000)
+                pygame.quit()
+                sys.exit()
 
         pygame.display.flip()
         CLOCK.tick(60)
