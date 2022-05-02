@@ -335,4 +335,5 @@ def DrawHintText(screen, smol_font, larger_font):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     main()
