@@ -39,7 +39,18 @@ def interpreter(code: "list[str]"):
             output += chr(memory[memory_pointer])
         elif code[pointer] == "P":
             # Input the memory
-            memory[memory_pointer] = ord(input())
+            ok = False
+            while not ok:
+                inp = input()
+                try:
+                    memory[memory_pointer] = ord(input())
+                except:
+                    if inp == "exit":
+                        return output
+                    print("Invalid input")
+                else:
+                    ok = True
+                    
         elif code[pointer] == "y":
             # Check if the memory is 0
             if memory[memory_pointer] == 0:
