@@ -34,13 +34,15 @@ BUTTON_TEXT_OFFSET = 5
 BUTTON_TEXT_COLOR = (255, 255, 255)
 BOAD_EMPTY = " "
 
+
 PIECE_DEFAULT_X = 3
 
 
 def main():
     global SCREEN, CLOCK
     pygame.init()
-    smallfont = pygame.font.SysFont('Corbel', 35)
+    smallfont = pygame.font.SysFont('Corbel', 25)
+    largerFont = pygame.font.SysFont('Courier New', 25) # The only monospaced font that comes with windows
     BUTTON_TEXT_SURFACE = smallfont.render(
         "Run brainf*ck", True, BUTTON_TEXT_COLOR)
     SCREEN = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -88,6 +90,7 @@ def main():
                     mouseDown = True
 
         drawButton(mouseDown, BUTTON_TEXT_SURFACE, placedBoard)
+        DrawHintText(SCREEN, smallfont, largerFont)
 
         if (ticks % TICKSPERMOVE == 0 or wantsToMoveDown) and checkIfValidPosition(placedBoard, SHAPES[current_shape][rotation], piecex, piecey + 1):
             print("Moved down")
@@ -109,7 +112,7 @@ def main():
             for row in placedBoard:
                 print(row)
 
-            current_shape = random.choice(SHAPE_CODE)
+            current_shape = getNewPiece(current_shape)
             piecex, piecey = PIECE_DEFAULT_X, 0
             current_color = random.choice(COLORS)
             rotation = 0
@@ -177,7 +180,7 @@ def getColorFromChar(char):
     elif char == "b":
         return (48, 63, 159)
     elif char == "y":
-        return (253, 216, 53)
+        return (255, 160, 0)
     elif char == "c":
         return (3, 169, 244)
     elif char == "p":
@@ -213,10 +216,10 @@ def checkIfValidPosition(board, piece, x, y):
     # Calculate the grid offset ie. for many rows below the bottom of the piece are empty
     offset = 0
     for i in range(len(piece)):
-        if 1 in piece[i]:
+        if 1 in piece[i] and i > 0:
             offset += 1
 
-    if y + offset > GRID_HEIGHT:
+    if y + offset > GRID_HEIGHT -1:
         return False
 
     # Check if the piece is too far left or right
@@ -236,7 +239,10 @@ def checkIfValidPosition(board, piece, x, y):
 
 
 def drawButton(mouseDown, BUTTON_TEXT_SURFACE, board):
-    # Button stuff
+    """
+    Draws the button and handles running the interpreter
+    """
+    
     mx, my = pygame.mouse.get_pos()
     if BUTTON_X <= mx <= BUTTON_X + BUTTON_WIDTH and BUTTON_Y <= my <= BUTTON_Y+BUTTON_HEIGHT:
         pygame.draw.rect(SCREEN, BUTTON_DARK, [
@@ -254,11 +260,64 @@ def drawButton(mouseDown, BUTTON_TEXT_SURFACE, board):
             print("---------------------------------")
 
             os.system("python3 interperter.py")
+
+            print("---------------------------------")
+            print("Exiting interpreter")
+            print("---------------------------------")
     else:
         pygame.draw.rect(SCREEN, BUTTON_LIGHT, [
                          BUTTON_X, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT])
 
     SCREEN.blit(BUTTON_TEXT_SURFACE, (BUTTON_X + BUTTON_TEXT_OFFSET, BUTTON_Y))
+
+def getNewPiece(previous_shape):
+    """
+    Returns a new piece weighted against the previous piece
+    """
+    temp_piece = random.choice(SHAPE_CODE)
+    if previous_shape == temp_piece:
+        temp_piece = random.choice(SHAPE_CODE)
+    return temp_piece
+
+def DrawHintText(screen, smol_font, larger_font):
+    """
+    Draw some text on the left half of the screen which tells the user what the pieces do in the interpreter
+    """
+    hint_text1 = "Hint: The interpreter will run the "
+    hint_text_surface1 = smol_font.render(hint_text1, True, WHITE)
+    screen.blit(hint_text_surface1, (10, 10))
+    hint_text2 = "code in the shell window"
+    hint_text_surface2 = smol_font.render(hint_text2, True, WHITE)
+    screen.blit(hint_text_surface2, (10, 30))
+
+    # Draw 8 cubes in all the different colors
+    for i in range(8):
+        y = 60 + i * 50
+        x = 10
+        pygame.draw.rect(screen, getColorFromChar(COLORS[i]), [x, y, 40, 40])
+
+        # Draw the brainfuck code on the block
+        if i == 0:
+            brainfuck_char = "<"
+        elif i == 1:
+            brainfuck_char = ">"
+        elif i == 2:
+            brainfuck_char = "+"
+        elif i == 3:
+            brainfuck_char = "-"
+        elif i == 4:
+            brainfuck_char = "."
+        elif i == 5:
+            brainfuck_char = ","
+        elif i == 6:
+            brainfuck_char = "["
+        elif i == 7:
+            brainfuck_char = "]"
+        brainfuck_text = larger_font.render(brainfuck_char, True, WHITE)
+        screen.blit(brainfuck_text, (x + 12, y + 4))
+
+
+
 
 
 if __name__ == "__main__":
