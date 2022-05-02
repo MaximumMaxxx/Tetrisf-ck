@@ -50,10 +50,12 @@ def main():
     ticks = 0
     rotation = 0
     current_shape = random.choice(SHAPE_CODE)
+    previous_shape = current_shape
     piecex, piecey = PIECE_DEFAULT_X,0
 
     placedBoard = initBoard()
     current_color = random.choice(COLORS)
+
 
     while True:
         mouseDown = False
@@ -93,7 +95,7 @@ def main():
             # Reset everything for the next piece
             print("Reset for next piece")
             placedBoard = board.copy()
-            current_shape = random.choice(SHAPE_CODE)
+            current_shape, previous_shape = getNewPiece(previous_shape)
             piecex, piecey = PIECE_DEFAULT_X,0
             current_color = random.choice(COLORS)
             rotation = 0
@@ -176,46 +178,13 @@ def renderShape(shape, x, y, color, board):
                     pass
     return board
 
-def checkIfCanGoLeft(board, piece, x, y):
-    """
-    Checks if the piece can go left
-    """
-    for i in range(len(piece)):
-        for j in range(len(piece[i])):
-            if piece[i][j] != 0:
-                if x - 1 + j < 0 or board[y][x - 1] != " ":
-                    print("Piece can't go left")
-                    return False
-    return True    
 
-def checkIfCanGoRight(board, piece, x, y):
-    """
-    Checks if the piece can go right
-    """
-    for i in range(len(piece)):
-        for j in range(len(piece[i])):
-            if piece[i][j] != 0:
-                if x + 1 + j > GRID_WIDTH or board[y][x + 1] != " ":
-                    print("Piece can't go right")
-                    return False
-    return True
 
-def checkIfCanGoDown(board, piece, x, y):
+def checkIfValidPosition(board, piece, x, y):
     """
     Checks if the piece can go down
     """
-    if y == GRID_HEIGHT - 1 :
-        return False
-
-    for i in range(len(piece)):
-        for j in range(len(piece[i])):
-            if piece[i][j] != 0:
-                try:
-                    if y + 1 + i > GRID_HEIGHT or board[y + 1][x + j] != " ":
-                        return False
-                except IndexError:
-                    pass
-    return True
+    pass
 
 def drawButton(mouseDown, BUTTON_TEXT_SURFACE):
     # Button stuff
@@ -229,6 +198,16 @@ def drawButton(mouseDown, BUTTON_TEXT_SURFACE):
         pygame.draw.rect(SCREEN, BUTTON_LIGHT,[BUTTON_X,BUTTON_Y,BUTTON_WIDTH,BUTTON_HEIGHT])
 
     SCREEN.blit(BUTTON_TEXT_SURFACE , (BUTTON_X + BUTTON_TEXT_OFFSET, BUTTON_Y))
+
+def getNewPiece(pervious_shape):
+    """
+    Returns a new piece but weighted against the previous piece
+    """
+    new_shape = random.choice(SHAPE_CODE)
+    if new_shape == pervious_shape:
+        print("Rerolled shape")
+        new_shape = random.choice(SHAPE_CODE)
+    return new_shape, pervious_shape
 
 if __name__ == "__main__":
     main()
