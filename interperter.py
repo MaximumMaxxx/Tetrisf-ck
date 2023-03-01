@@ -1,6 +1,7 @@
 import json
 import logging
 
+
 # Function that takes in an array of single characters and uses them to run brainfuck code
 # "r" = <
 # "o" = >
@@ -17,11 +18,11 @@ def interpreter(code: "list[str]"):
     Takes in an array of single characters and uses them to run brainfuck code
     """
     # Check if the code is empty
-    if [" "]*200 == code:
+    if [" "] * 200 == code:
         # Return an empty string
         print("Empty code")
         return ""
-    
+
     # Check if the brainfuck code is valid
     stack = []
     for i in range(len(code)):
@@ -29,7 +30,7 @@ def interpreter(code: "list[str]"):
         if code[i] == "y":
             stack.append("[")
         elif code[i] == "c":
-            if len(stack) != 0 and stack[len(stack) -1] == "[":
+            if len(stack) != 0 and stack[len(stack) - 1] == "[":
                 stack.pop()
             else:
                 print("Invalid code")
@@ -38,7 +39,6 @@ def interpreter(code: "list[str]"):
     if len(stack) != 0:
         print("Invalid code")
         return "Invalid code"
-
 
     # Initialize variables
     output = ""
@@ -77,7 +77,7 @@ def interpreter(code: "list[str]"):
                         print("Invalid input")
                     else:
                         ok = True
-                        
+
             elif code[code_pointer] == "y":
                 # Check if the memory is 0
                 if memory[memory_pointer] == 0:
@@ -90,13 +90,11 @@ def interpreter(code: "list[str]"):
                     # Move the pointer to the matching [
                     while code[code_pointer] != "y":
                         code_pointer -= 1
-        except: # If something goes wrong get some logs
+        except:  # If something goes wrong get some logs
             logging.exception(f"Error at pointer: {code_pointer}")
             logging.exception(f"Memory pointer: {memory_pointer}")
             logging.exception(f"Memory: {memory}")
             logging.exception(f"Code: {code}")
-
-
 
         # Move the pointer forward
         code_pointer += 1
@@ -106,7 +104,6 @@ def interpreter(code: "list[str]"):
 
     # Return the output
     return output
-    
 
 
 def boardToSingleArray(board):

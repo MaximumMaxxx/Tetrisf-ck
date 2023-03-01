@@ -6,22 +6,11 @@ import sys
 from consts import *
 import copy
 
-# Colors:
-# red = r
-# lime = g
-# blue = b
-# yellow = y
-# cyan = c
-# purple = p
-
-
-BLACK = (0, 0, 0)
-WHITE = (224, 224, 224)
 WINDOW_HEIGHT = 1080
 WINDOW_WIDTH = 1200
 GRID_WIDTH = 10
 GRID_HEIGHT = 20
-TICKSPERMOVE = 60  # how long before moving the piece down again. This is a const because there is no line clearing in this version
+TICKSPERMOVE = 60
 
 # Stuff for the button
 BUTTON_WIDTH = 200
@@ -33,7 +22,9 @@ BUTTON_Y = WINDOW_HEIGHT - BUTTON_HEIGHT - 20
 BUTTON_TEXT_OFFSET = 5
 BUTTON_TEXT_COLOR = (255, 255, 255)
 BOAD_EMPTY = " "
+PIECE_SPAWN_ABOVE_BOARD_HEIGHT = 15
 
+SCROLL_DISTANCE = 5
 
 PIECE_DEFAULT_X = 3
 
@@ -42,7 +33,7 @@ def main():
     global SCREEN, CLOCK
     pygame.init()
     smallfont = pygame.font.SysFont('Corbel', 25)
-    largerFont = pygame.font.SysFont('Courier New', 25) # The only monospaced font that comes with windows
+    largerFont = pygame.font.SysFont('Courier New', 25)  # The only monospaced font that comes with windows
     BUTTON_TEXT_SURFACE = smallfont.render(
         "Run brainf*ck", True, BUTTON_TEXT_COLOR)
     SCREEN = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -69,36 +60,24 @@ def main():
         board = renderShape(
             SHAPES[current_shape][rotation], piecex, piecey, current_color, board)
         drawBoard(board)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
-                    temprotation = (rotation + 1) % 4
-                    if checkIfValidPosition(placedBoard, SHAPES[current_shape][temprotation], piecex, piecey):
-                        rotation = temprotation
-
-                elif event.key == pygame.K_LEFT and checkIfValidPosition(placedBoard, SHAPES[current_shape][rotation], piecex-1, piecey):
-                    piecex -= 1
-                elif event.key == pygame.K_RIGHT and checkIfValidPosition(placedBoard, SHAPES[current_shape][rotation], piecex+1, piecey):
-                    piecex += 1
-                elif event.key == pygame.K_DOWN and checkIfValidPosition(placedBoard, SHAPES[current_shape][rotation], piecex, piecey + 1):
-                    wantsToMoveDown = True
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
-                    # Left mouse
-                    mouseDown = True
+        mouseDown, piecex, rotation, wantsToMoveDown = eventHandler(
+            current_shape, mouseDown, piecex, piecey,
+            placedBoard, rotation, wantsToMoveDown
+        )
 
         drawButton(mouseDown, BUTTON_TEXT_SURFACE, placedBoard)
         DrawHintText(SCREEN, smallfont, largerFont)
 
-        if (ticks % TICKSPERMOVE == 0 or wantsToMoveDown) and checkIfValidPosition(placedBoard, SHAPES[current_shape][rotation], piecex, piecey + 1):
+        if (ticks % TICKSPERMOVE == 0 or wantsToMoveDown) and checkIfValidPosition(
+                placedBoard,
+                SHAPES[current_shape][rotation],
+                piecex, piecey + 1
+        ):
             print("Moved down")
             piecey += 1
 
         # Reset everything for the next piece
-        if not checkIfValidPosition(placedBoard, SHAPES[current_shape][rotation], piecex, piecey+1):
+        if not checkIfValidPosition(placedBoard, SHAPES[current_shape][rotation], piecex, piecey + 1):
             print("Reset for next piece")
             print(f"Debuge stuff")
             print(current_shape)
@@ -127,7 +106,6 @@ def main():
                     for _ in range(GRID_WIDTH):
                         placedBoard[0].append(BOAD_EMPTY)
 
-
             # Check if game is over
             # Do the board overlay stuff with the next piece
             if not checkIfValidPosition(placedBoard, SHAPES[current_shape][rotation], piecex, piecey):
@@ -144,6 +122,44 @@ def main():
         CLOCK.tick(60)
 
 
+def eventHandler(current_shape, mouseDown, piecex, piecey, placedBoard, rotation, wantsToMoveDown):
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP:
+                temprotation = (rotation + 1) % 4
+                if checkIfValidPosition(placedBoard, SHAPES[current_shape][temprotation], piecex, piecey):
+                    rotation = temprotation
+
+            elif event.key == pygame.K_LEFT and checkIfValidPosition(
+                    placedBoard, SHAPES[current_shape][rotation],
+                    piecex - 1, piecey
+            ):
+                piecex -= 1
+            elif event.key == pygame.K_RIGHT and checkIfValidPosition(
+                    placedBoard, SHAPES[current_shape][rotation],
+                    piecex + 1, piecey
+            ):
+                piecex += 1
+            elif event.key == pygame.K_DOWN and checkIfValidPosition(
+                    placedBoard, SHAPES[current_shape][rotation],
+                    piecex, piecey + 1
+            ):
+                wantsToMoveDown = True
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                # Left mouse
+                mouseDown = True
+        elif event.type == pygame.MOUSEWHEEL:
+            if event.y == 1:
+                print("Scrolled up")
+            else:
+                print("Scrolled down")
+    return mouseDown, piecex, rotation, wantsToMoveDown
+
+
 def drawBoard(board):
     """
     Draws the grid on the screen
@@ -153,13 +169,18 @@ def drawBoard(board):
     GRID_PX_WIDTH = (BLOCKSIZE * GRID_WIDTH) / 2
     GRID_PX_HEIGHT = (BLOCKSIZE * GRID_HEIGHT) / 2
     xindex, yindex = 0, 0
-    for x in range(int(WINDOW_WIDTH/2 - GRID_PX_WIDTH), int(WINDOW_WIDTH/2 + GRID_PX_WIDTH), BLOCKSIZE):
+    for x in range(int(WINDOW_WIDTH / 2 - GRID_PX_WIDTH), int(WINDOW_WIDTH / 2 + GRID_PX_WIDTH), BLOCKSIZE):
 
-        for y in range(int(WINDOW_HEIGHT/2 - GRID_PX_HEIGHT + Y_OFFSET), int(WINDOW_HEIGHT/2 + GRID_PX_HEIGHT + Y_OFFSET), BLOCKSIZE):
+        for y in range(
+                int(WINDOW_HEIGHT / 2 - GRID_PX_HEIGHT + Y_OFFSET),
+                int(WINDOW_HEIGHT / 2 + GRID_PX_HEIGHT + Y_OFFSET), BLOCKSIZE
+        ):
             rect = pygame.Rect(x, y, BLOCKSIZE, BLOCKSIZE)
 
-            color = getColorFromChar(board[yindex][xindex])
-            if color != None:
+            color = board[yindex][xindex]
+
+            print(color)
+            if color != " ":
                 # Draw the block filled in
                 pygame.draw.rect(SCREEN, color, rect)
             # Draw the grid overlay
@@ -182,45 +203,6 @@ def initBoard():
     return board
 
 
-def getColorFromChar(char):
-    """
-    Returns the color of the character
-    """
-    # Colors to piece mappings here
-    if char == "r":
-        return (211, 47, 47)
-    elif char == "g":
-        return (46, 125, 50)
-    elif char == "b":
-        return (48, 63, 159)
-    elif char == "y":
-        return (255, 160, 0)
-    elif char == "c":
-        return (3, 169, 244)
-    elif char == "p":
-        return (106, 27, 154)
-    elif char == "o":
-        return (255, 111, 0)
-    elif char == "P":
-        return (233, 30, 99)
-    else:
-        return None
-
-
-def renderShape(shape, x, y, color, board):
-    """
-    Renders the shape on the board
-    """
-    for i in range(len(shape)):
-        for j in range(len(shape[i])):
-            if shape[i][j] != 0:
-                try:
-                    board[y + i][x + j] = color
-                except IndexError:  # Just ignore any cells outside the board since they are just empty anyways
-                    pass
-    return board
-
-
 def checkIfValidPosition(board, piece, x, y):
     """
     Checks if the passed position is valid, A bit of a slower way of doing this than 
@@ -233,7 +215,7 @@ def checkIfValidPosition(board, piece, x, y):
         if 1 in piece[i] and i > 0:
             offset += 1
 
-    if y + offset > GRID_HEIGHT -1:
+    if y + offset > GRID_HEIGHT - 1:
         return False
 
     # Check if the piece is too far left or right
@@ -243,7 +225,7 @@ def checkIfValidPosition(board, piece, x, y):
                 return False
 
     checkAgaist = renderShape(
-        piece, x, y, ".", copy.deepcopy(board))  # Render the piece in a color that isn't otherwise used
+        , copy.deepcopy(board))  # Render the piece in a color that isn't otherwise used
     for li, line in enumerate(checkAgaist):
         for ci, cell in enumerate(line):
             if cell == '.' and board[li][ci] != ' ':
@@ -256,11 +238,11 @@ def drawButton(mouseDown, BUTTON_TEXT_SURFACE, board):
     """
     Draws the button and handles running the interpreter
     """
-    
+
     mx, my = pygame.mouse.get_pos()
-    if BUTTON_X <= mx <= BUTTON_X + BUTTON_WIDTH and BUTTON_Y <= my <= BUTTON_Y+BUTTON_HEIGHT:
+    if BUTTON_X <= mx <= BUTTON_X + BUTTON_WIDTH and BUTTON_Y <= my <= BUTTON_Y + BUTTON_HEIGHT:
         pygame.draw.rect(SCREEN, BUTTON_DARK, [
-                         BUTTON_X, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT])
+            BUTTON_X, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT])
         if mouseDown:
             # Dump the board to json
             with open("board.json", "w") as f:
@@ -280,9 +262,10 @@ def drawButton(mouseDown, BUTTON_TEXT_SURFACE, board):
             print("---------------------------------")
     else:
         pygame.draw.rect(SCREEN, BUTTON_LIGHT, [
-                         BUTTON_X, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT])
+            BUTTON_X, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT])
 
     SCREEN.blit(BUTTON_TEXT_SURFACE, (BUTTON_X + BUTTON_TEXT_OFFSET, BUTTON_Y))
+
 
 def getNewPiece(previous_shape):
     """
@@ -292,6 +275,7 @@ def getNewPiece(previous_shape):
     if previous_shape == temp_piece:
         temp_piece = random.choice(SHAPE_CODE)
     return temp_piece
+
 
 def DrawHintText(screen, smol_font, larger_font):
     """
@@ -308,9 +292,10 @@ def DrawHintText(screen, smol_font, larger_font):
     for i in range(8):
         y = 60 + i * 50
         x = 10
-        pygame.draw.rect(screen, getColorFromChar(COLORS[i]), [x, y, 40, 40])
+        pygame.draw.rect(screen, COLORS[i].rgb, [x, y, 40, 40])
 
         # Draw the brainfuck code on the block
+        brainfuck_char = ""
         if i == 0:
             brainfuck_char = "<"
         elif i == 1:
@@ -329,9 +314,6 @@ def DrawHintText(screen, smol_font, larger_font):
             brainfuck_char = "]"
         brainfuck_text = larger_font.render(brainfuck_char, True, WHITE)
         screen.blit(brainfuck_text, (x + 12, y + 4))
-
-
-
 
 
 if __name__ == "__main__":

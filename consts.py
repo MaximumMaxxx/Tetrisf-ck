@@ -1,4 +1,20 @@
-COLORS = ["r", "o", "g", "b", "p", "P", "y", "c"]
+from collections import namedtuple
+
+BLACK = (0, 0, 0)
+WHITE = (224, 224, 224)
+
+colorTuple = namedtuple("colorTuple", "rgb code")
+
+RED = colorTuple((244, 67, 54), "r")
+ORANGE = colorTuple((255, 87, 34), "o")
+YELLOW = colorTuple((255, 193, 7), "y")
+GREEN = colorTuple((76, 175, 80), "g")
+BLUE = colorTuple((63, 81, 181), "b")
+CYAN = colorTuple((0, 188, 212), "c")
+PURPLE = colorTuple((103, 58, 183), "p")
+PINK = colorTuple((233, 30, 99), "P")
+
+COLORS = [RED, ORANGE, YELLOW, GREEN, BLUE, CYAN, PURPLE, PINK]
 SHAPE_CODE = ["t", "s", "z", "l", "-|", "|-", "b"]
 SHAPES = {
     "t": [
@@ -181,6 +197,5 @@ SHAPES = {
             [0, 1, 1, 0],
         ]
     ]
-    
-    
+
 }
